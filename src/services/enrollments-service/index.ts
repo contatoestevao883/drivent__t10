@@ -64,11 +64,13 @@ async function createOrUpdateEnrollmentWithAddress(params: CreateOrUpdateEnrollm
 
   // TODO - Verificar se o CEP é válido antes de associar ao enrollment.
 
-  const validCEP = await isValidBrZipCode(address.cep);
+  const validCEP = await getAddressFromCEP(address.cep);
 
-  if (!validCEP) {
+  if (validCEP.erro === true) {
     throw badRequestError();
   }
+
+  console.log(validCEP);
 
   const newEnrollment = await enrollmentRepository.upsert(params.userId, enrollment, exclude(enrollment, 'userId'));
 
@@ -82,7 +84,7 @@ async function isValidBrZipCode(cep: string) {
   if (validateCep) {
     return true;
   } else {
-    false;
+    return false;
   }
 }
 
