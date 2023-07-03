@@ -1,9 +1,10 @@
 import { Address, Enrollment } from '@prisma/client';
 import { request } from '@/utils/request';
-import { badRequestError, invalidDataError, notFoundError } from '@/errors';
+import { invalidDataError, notFoundError } from '@/errors';
 import addressRepository, { CreateAddressParams } from '@/repositories/address-repository';
 import enrollmentRepository, { CreateEnrollmentParams } from '@/repositories/enrollment-repository';
 import { exclude } from '@/utils/prisma-utils';
+import { badRequestError } from '@/errors/bad-request-error';
 
 // TODO - Receber o CEP por parâmetro nesta função.
 async function getAddressFromCEP(cep: string) {
@@ -11,18 +12,26 @@ async function getAddressFromCEP(cep: string) {
   // const result = await request.get(`${process.env.VIA_CEP_API}/37440000/json/`);
   const result = await request.get(`${process.env.VIA_CEP_API}/${cep}/json/`);
 
+  const validCEP = await isValidBrZipCode(cep);
+
+  if (!validCEP) {
+    throw badRequestError();
+  }
+
+  if (result.data.erro === true) {
+    return result.data;
+  }
+
   if (!result.data) {
     throw notFoundError();
   }
 
   // FIXME: não estamos interessados em todos os campos
-  delete result.data.cep;
-  delete result.data.ibge;
-  delete result.data.gia;
-  delete result.data.ddd;
-  delete result.data.siafi;
+  const { logradouro, complemento, bairro, localidade, uf } = result.data;
 
-  return result.data;
+  const data = { logradouro, complemento, bairro, cidade: localidade, uf };
+
+  return data;
 }
 
 async function getOneWithAddressByUserId(userId: number): Promise<GetOneWithAddressByUserIdResult> {
@@ -55,13 +64,27 @@ async function createOrUpdateEnrollmentWithAddress(params: CreateOrUpdateEnrollm
 
   // TODO - Verificar se o CEP é válido antes de associar ao enrollment.
 
-  if (address.cep.length < 8) {
+  const validCEP = await isValidBrZipCode(address.cep);
+
+  if (!validCEP) {
     throw badRequestError();
   }
 
   const newEnrollment = await enrollmentRepository.upsert(params.userId, enrollment, exclude(enrollment, 'userId'));
 
   await addressRepository.upsert(newEnrollment.id, address, address);
+}
+
+async function isValidBrZipCode(cep: string) {
+  const regex = /^\d{5}-?\d{3}$/;
+  console.log(cep);
+  const validateCep = regex.test(cep);
+
+  if (validateCep) {
+    return true;
+  } else {
+    false;
+  }
 }
 
 function getAddressForUpsert(address: CreateAddressParams) {
