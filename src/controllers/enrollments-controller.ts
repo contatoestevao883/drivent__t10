@@ -23,9 +23,7 @@ export async function postCreateOrUpdateEnrollment(req: AuthenticatedRequest, re
     });
     return res.sendStatus(httpStatus.OK);
   } catch (error) {
-    if (error.name === 'Bad Request') {
-      return res.sendStatus(httpStatus.BAD_REQUEST);
-    }
+    return res.sendStatus(httpStatus.BAD_REQUEST);
   }
 }
 

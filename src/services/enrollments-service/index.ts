@@ -77,7 +77,6 @@ async function createOrUpdateEnrollmentWithAddress(params: CreateOrUpdateEnrollm
 
 async function isValidBrZipCode(cep: string) {
   const regex = /^\d{5}-?\d{3}$/;
-  console.log(cep);
   const validateCep = regex.test(cep);
 
   if (validateCep) {
