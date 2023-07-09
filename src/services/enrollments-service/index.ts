@@ -14,16 +14,12 @@ async function getAddressFromCEP(cep: string) {
 
   const validCEP = await isValidBrZipCode(cep);
 
-  if (!validCEP) {
-    throw badRequestError();
+  if (validCEP === false || !result.data) {
+    throw notFoundError();
   }
 
   if (result.data.erro === true) {
     return result.data;
-  }
-
-  if (!result.data) {
-    throw notFoundError();
   }
 
   // FIXME: não estamos interessados em todos os campos
@@ -70,8 +66,6 @@ async function createOrUpdateEnrollmentWithAddress(params: CreateOrUpdateEnrollm
     throw badRequestError();
   }
 
-  console.log(validCEP);
-
   const newEnrollment = await enrollmentRepository.upsert(params.userId, enrollment, exclude(enrollment, 'userId'));
 
   await addressRepository.upsert(newEnrollment.id, address, address);
@@ -80,12 +74,7 @@ async function createOrUpdateEnrollmentWithAddress(params: CreateOrUpdateEnrollm
 async function isValidBrZipCode(cep: string) {
   const regex = /^\d{5}-?\d{3}$/;
   const validateCep = regex.test(cep);
-
-  if (validateCep) {
-    return true;
-  } else {
-    return false;
-  }
+  return validateCep;
 }
 
 function getAddressForUpsert(address: CreateAddressParams) {
