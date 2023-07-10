@@ -5,7 +5,6 @@ export function connectDb(): void {
   if (prisma) {
     return;
   }
-
   prisma = new PrismaClient();
 }
 
