@@ -33,9 +33,7 @@ async function postTickets(ticketId: number, userId: number) {
     throw badRequestError();
   }
 
-  const tickets = await ticketRepository.postTickets(ticketId, userId);
-
-  return tickets;
+  await ticketRepository.postTickets(ticketId, userId);
 }
 
 const ticketService = {
